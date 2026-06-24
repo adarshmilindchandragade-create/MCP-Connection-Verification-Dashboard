@@ -27,12 +27,13 @@ export const DebugConsole: React.FC = () => {
   };
 
   useEffect(() => {
+    const API_BASE_URL = import.meta.env.VITE_API_URL || '';
     // Populate initial system messages
     addLine('system', 'MCP Inspector Console Emulator v1.0.0 initialized');
     addLine('system', `Status: ${status.toUpperCase()}. Awaiting connections...`);
     
     // Connect to SSE log stream
-    const eventSource = new EventSource('/api/logs/stream');
+    const eventSource = new EventSource(`${API_BASE_URL}/api/logs/stream`);
 
     eventSource.onopen = () => {
       addLine('system', 'Connected to backend live logs SSE stream.');
