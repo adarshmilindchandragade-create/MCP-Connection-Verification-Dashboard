@@ -175,3 +175,34 @@ Since this is a full-stack application (Vite React frontend + Node.js Express ba
    - Value: `https://<your-render-backend-url>` (paste the URL you copied from Render, without trailing slash)
 4. Click **Deploy**.
 5. Your dashboard will now be live on Vercel's static domain and will dynamically route all requests to your deployed Render backend!
+
+### 3. Deploy the Frontend on Cloudflare Pages (Alternative)
+You can deploy the static frontend to Cloudflare Pages either via git integration or via CLI.
+
+#### Option A: Deploy via GitHub Integration (Recommended)
+1. Sign up/Log in to the [Cloudflare Dashboard](https://dash.cloudflare.com).
+2. Go to **Workers & Pages** -> **Create Application** -> **Pages** tab -> **Connect to Git**.
+3. Select this GitHub repository (`MCP-Connection-Verification-Dashboard`).
+4. Configure the build settings:
+   - **Framework Preset**: `Vite`
+   - **Build Command**: `npm run build`
+   - **Build Output Directory**: `dist`
+5. Go to **Environment Variables (advanced)** and add:
+   - Name: `VITE_API_URL`
+   - Value: `https://<your-render-backend-url>` (your deployed Express backend URL, without trailing slash)
+6. Click **Save and Deploy**. Cloudflare will automatically build and publish your dashboard, and future git pushes will trigger automatic deployments.
+
+#### Option B: Deploy via Cloudflare Wrangler CLI
+1. Build the frontend production bundle:
+   ```bash
+   npm run build
+   ```
+2. Authenticate the local Wrangler CLI with your Cloudflare account:
+   ```bash
+   npx wrangler login
+   ```
+3. Deploy the `dist` folder to Cloudflare Pages:
+   ```bash
+   npx wrangler pages deploy dist --project-name mcp-connection-dashboard
+   ```
+
