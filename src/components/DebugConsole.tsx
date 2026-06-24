@@ -10,7 +10,7 @@ interface ConsoleLine {
 }
 
 export const DebugConsole: React.FC = () => {
-  const { status } = useMCPStore();
+  const { status, inspectorBackendUrl } = useMCPStore();
   const [lines, setLines] = useState<ConsoleLine[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -27,16 +27,15 @@ export const DebugConsole: React.FC = () => {
   };
 
   useEffect(() => {
-    const API_BASE_URL = import.meta.env.VITE_API_URL || '';
     // Populate initial system messages
     addLine('system', 'MCP Inspector Console Emulator v1.0.0 initialized');
     addLine('system', `Status: ${status.toUpperCase()}. Awaiting connections...`);
     
     // Connect to SSE log stream
-    const eventSource = new EventSource(`${API_BASE_URL}/api/logs/stream`);
+    const eventSource = new EventSource(`${inspectorBackendUrl}/api/logs/stream`);
 
     eventSource.onopen = () => {
-      addLine('system', 'Connected to backend live logs SSE stream.');
+      addLine('system', `Connected to backend live logs stream: ${inspectorBackendUrl || 'relative local'}`);
     };
 
     eventSource.onerror = () => {
@@ -68,7 +67,7 @@ export const DebugConsole: React.FC = () => {
     return () => {
       eventSource.close();
     };
-  }, []);
+  }, [inspectorBackendUrl]);
 
   // Listen to status changes to print to console
   useEffect(() => {

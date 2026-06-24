@@ -3,7 +3,7 @@ import { useMCPStore } from '../store/mcpStore';
 import { Link2, Link2Off, Loader2, Play } from 'lucide-react';
 
 export const ConnectionPanel: React.FC = () => {
-  const { config, setConfig, status, connect, disconnect, errorMsg } = useMCPStore();
+  const { config, setConfig, status, connect, disconnect, errorMsg, inspectorBackendUrl, setInspectorBackendUrl } = useMCPStore();
   const [argsInput, setArgsInput] = useState(config.args?.join(' ') || '');
 
   const handleTypeChange = (type: 'sse' | 'stdio') => {
@@ -135,6 +135,22 @@ export const ConnectionPanel: React.FC = () => {
             </div>
           </>
         )}
+
+        {/* Backend API Configuration */}
+        <div className="pt-4 border-t border-[#27272a]/60">
+          <label className="block text-[11px] font-mono font-medium text-zinc-500 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+            <span>Inspector Backend API URL</span>
+            <span className="text-[9px] lowercase font-normal text-zinc-600">Proxy server address</span>
+          </label>
+          <input
+            type="text"
+            value={inspectorBackendUrl}
+            onChange={(e) => setInspectorBackendUrl(e.target.value)}
+            disabled={isConnected || isConnecting}
+            placeholder="e.g. http://localhost:3001 (Leave blank to use host relative)"
+            className="w-full bg-[#09090b] border border-[#27272a] rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-emerald-500/50 transition-colors duration-200 font-mono disabled:opacity-50"
+          />
+        </div>
 
         <div className="pt-2 flex items-center space-x-3">
           {isConnected ? (

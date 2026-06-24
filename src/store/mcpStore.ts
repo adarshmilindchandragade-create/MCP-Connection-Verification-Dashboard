@@ -13,7 +13,15 @@ import type {
   DashboardMetrics
 } from '../types/mcp';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const getInitialBackendUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return '';
+  }
+  return 'http://localhost:3001';
+};
 
 interface MCPStore {
   config: ConnectionConfig;
@@ -30,12 +38,14 @@ interface MCPStore {
   metrics: DashboardMetrics;
   errorMsg: string | null;
   isMockMode: boolean;
+  inspectorBackendUrl: string;
 
   setConfig: (config: Partial<ConnectionConfig>) => void;
   addTimelineEvent: (type: TimelineEvent['type'], message: string) => void;
   addTrafficLog: (direction: 'request' | 'response', method: string, payload: any, duration?: number, error?: string) => void;
   clearTrafficLogs: () => void;
   setMockMode: (isMock: boolean) => void;
+  setInspectorBackendUrl: (url: string) => void;
   
   connect: () => Promise<boolean>;
   disconnect: () => Promise<void>;
@@ -108,10 +118,20 @@ export const useMCPStore = create<MCPStore>((set, get) => ({
   },
   errorMsg: null,
   isMockMode: false,
+  inspectorBackendUrl: typeof window !== 'undefined' && localStorage.getItem('mcp_inspector_backend_url') !== null 
+    ? (localStorage.getItem('mcp_inspector_backend_url') || '')
+    : getInitialBackendUrl(),
 
   setConfig: (newConfig) => set((state) => ({ 
     config: { ...state.config, ...newConfig } 
   })),
+
+  setInspectorBackendUrl: (url) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mcp_inspector_backend_url', url);
+    }
+    set({ inspectorBackendUrl: url });
+  },
 
   addTimelineEvent: (type, message) => set((state) => {
     const newEvent: TimelineEvent = {
@@ -163,7 +183,7 @@ export const useMCPStore = create<MCPStore>((set, get) => ({
   setMockMode: (isMock) => set({ isMockMode: isMock }),
 
   connect: async () => {
-    const { config, addTimelineEvent, addTrafficLog } = get();
+    const { config, addTimelineEvent, addTrafficLog, inspectorBackendUrl } = get();
     set({ status: 'connecting', errorMsg: null });
     addTimelineEvent('info', `Initiated connection (${config.type.toUpperCase()})`);
     
@@ -173,7 +193,7 @@ export const useMCPStore = create<MCPStore>((set, get) => ({
     addTrafficLog('request', reqMethod, { config });
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/connect`, {
+      const res = await fetch(`${inspectorBackendUrl}/api/connect`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ config, mock: get().isMockMode })
@@ -236,9 +256,9 @@ export const useMCPStore = create<MCPStore>((set, get) => ({
   },
 
   disconnect: async () => {
-    const { addTimelineEvent } = get();
+    const { addTimelineEvent, inspectorBackendUrl } = get();
     try {
-      await fetch(`${API_BASE_URL}/api/disconnect`, { method: 'POST' });
+      await fetch(`${inspectorBackendUrl}/api/disconnect`, { method: 'POST' });
     } catch (e) {}
 
     addTimelineEvent('info', 'Disconnected from server');
@@ -256,14 +276,14 @@ export const useMCPStore = create<MCPStore>((set, get) => ({
   },
 
   executeTool: async (name, args) => {
-    const { addTimelineEvent, addTrafficLog } = get();
+    const { addTimelineEvent, addTrafficLog, inspectorBackendUrl } = get();
     addTimelineEvent('info', `Executing tool: ${name}`);
     
     const startTime = Date.now();
     addTrafficLog('request', `tools/call (${name})`, { name, arguments: args });
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/execute`, {
+      const res = await fetch(`${inspectorBackendUrl}/api/execute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, arguments: args, mock: get().isMockMode })
@@ -290,13 +310,13 @@ export const useMCPStore = create<MCPStore>((set, get) => ({
   },
 
   runValidation: async () => {
-    const { config, addTimelineEvent } = get();
+    const { config, addTimelineEvent, inspectorBackendUrl } = get();
     set(state => ({
       validationChecks: state.validationChecks.map(c => ({ ...c, status: 'pending', message: undefined }))
     }));
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/validate`, {
+      const res = await fetch(`${inspectorBackendUrl}/api/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ config, mock: get().isMockMode })
@@ -321,13 +341,13 @@ export const useMCPStore = create<MCPStore>((set, get) => ({
   },
 
   runN8NTests: async () => {
-    const { addTimelineEvent, config } = get();
+    const { addTimelineEvent, config, inspectorBackendUrl } = get();
     set(state => ({
       n8nTests: state.n8nTests.map(t => ({ ...t, status: 'pending', details: undefined }))
     }));
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/health/n8n`, {
+      const res = await fetch(`${inspectorBackendUrl}/api/health/n8n`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ config, mock: get().isMockMode })
