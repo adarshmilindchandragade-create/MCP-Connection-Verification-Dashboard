@@ -13,6 +13,8 @@ import type {
   DashboardMetrics
 } from '../types/mcp';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
 interface MCPStore {
   config: ConnectionConfig;
   status: MCPStatus;
@@ -171,7 +173,7 @@ export const useMCPStore = create<MCPStore>((set, get) => ({
     addTrafficLog('request', reqMethod, { config });
 
     try {
-      const res = await fetch('/api/connect', {
+      const res = await fetch(`${API_BASE_URL}/api/connect`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ config, mock: get().isMockMode })
@@ -236,7 +238,7 @@ export const useMCPStore = create<MCPStore>((set, get) => ({
   disconnect: async () => {
     const { addTimelineEvent } = get();
     try {
-      await fetch('/api/disconnect', { method: 'POST' });
+      await fetch(`${API_BASE_URL}/api/disconnect`, { method: 'POST' });
     } catch (e) {}
 
     addTimelineEvent('info', 'Disconnected from server');
@@ -261,7 +263,7 @@ export const useMCPStore = create<MCPStore>((set, get) => ({
     addTrafficLog('request', `tools/call (${name})`, { name, arguments: args });
 
     try {
-      const res = await fetch('/api/execute', {
+      const res = await fetch(`${API_BASE_URL}/api/execute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, arguments: args, mock: get().isMockMode })
@@ -294,7 +296,7 @@ export const useMCPStore = create<MCPStore>((set, get) => ({
     }));
 
     try {
-      const res = await fetch('/api/validate', {
+      const res = await fetch(`${API_BASE_URL}/api/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ config, mock: get().isMockMode })
@@ -325,7 +327,7 @@ export const useMCPStore = create<MCPStore>((set, get) => ({
     }));
 
     try {
-      const res = await fetch('/api/health/n8n', {
+      const res = await fetch(`${API_BASE_URL}/api/health/n8n`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ config, mock: get().isMockMode })
