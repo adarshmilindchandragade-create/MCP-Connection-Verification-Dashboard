@@ -150,3 +150,28 @@ If a connection check fails, review the diagnostic flags and consult the built-i
 - **Hangs on "Connecting..." / Timeout**: If the connection takes several minutes or times out, verify that you are connecting to a Streamable HTTP endpoint using `/http` or `/mcp-server/http`. The backend will automatically switch to the `StreamableHTTPClientTransport` to prevent timeouts.
 - **Connection Refused**: Verify that your n8n instance is running and reachable on port `5678`.
 - **IPv4/IPv6 loopback mismatch**: If curl connects to the backend but the browser returns a proxy error, ensure the proxy is pointed to `127.0.0.1:3001` rather than `localhost:3001`. (Vite is pre-configured to handle this automatically).
+
+---
+
+## 🚀 Production Deployment Guide
+
+Since this is a full-stack application (Vite React frontend + Node.js Express backend), the easiest way to deploy it for free is to host the backend on **Render** (or Railway) and the frontend on **Vercel** (or Netlify).
+
+### 1. Deploy the Backend Proxy (Express Server) on Render
+1. Sign up on [Render](https://render.com) and link your GitHub account.
+2. Click **New +** -> **Web Service**.
+3. Select this repository (`MCP-Connection-Verification-Dashboard`).
+4. Configure the settings:
+   - **Environment**: `Node`
+   - **Build Command**: `npm install`
+   - **Start Command**: `npx tsx server/index.ts`
+5. Deploy the service and copy the generated Service URL (e.g. `https://mcp-inspector-backend.onrender.com`).
+
+### 2. Deploy the Frontend (Vite App) on Vercel
+1. Sign up on [Vercel](https://vercel.com) and link your GitHub.
+2. Click **Add New** -> **Project** and select this repository.
+3. In the **Environment Variables** section, add:
+   - Key: `VITE_API_URL`
+   - Value: `https://<your-render-backend-url>` (paste the URL you copied from Render, without trailing slash)
+4. Click **Deploy**.
+5. Your dashboard will now be live on Vercel's static domain and will dynamically route all requests to your deployed Render backend!
